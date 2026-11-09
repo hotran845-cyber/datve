@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CineStar - Hệ Thống Đặt Vé Rạp Chiếu Phim</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        gold: {
+                            400: '#FBBF24',
+                            500: '#F59E0B',
+                            600: '#D97706',
+                        },
+                        cinema: {
+                            dark: '#0f1015',
+                            card: '#181a20',
+                            red: '#E50914',
+                            redHover: '#b80710',
+                            gold: '#D4AF37'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f1015;
+            color: #f3f4f6;
+        }
+
+        /* Perspective Screen Effect for Cinema */
+        .screen-3d {
+            perspective: 400px;
+        }
+
+        .screen-curve {
+            transform: rotateX(-12deg) scale(0.95);
+            box-shadow: 0 15px 35px rgba(229, 9, 20, 0.35);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0f1015;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #2a2d37;
+            border-radius: 4px;
+        }
+
+            ::-webkit-scrollbar-thumb:hover {
+                background: #D4AF37;
+            }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-cinema-red selection:text-white">
+
+    <!-- HEADER / NAVIGATION -->
+    <header class="sticky top-0 z-40 bg-cinema-dark/95 backdrop-blur-md border-b border-gray-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <!-- Logo -->
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('home')">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cinema-red to-cinema-gold flex items-center justify-center shadow-lg shadow-cinema-red/30">
+                    <i class="fa-solid fa-film text-xl text-white"></i>
+                </div>
+                <span class="text-2xl font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-cinema-gold">
+                    CINE<span class="text-cinema-red">STAR</span>
+                </span>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="hidden md:flex items-center space-x-8">
+                <button onclick="switchTab('home')" class="nav-btn text-cinema-gold font-medium hover:text-white transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-house text-sm"></i> Trang Chủ
+                </button>
+                <button onclick="switchTab('tickets')" class="nav-btn text-gray-300 font-medium hover:text-cinema-gold transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-ticket text-sm"></i> Vé Đã Đặt
+                </button>
+            </nav>
+
+            <!-- User Status / Login Area -->
+            <div id="userHeaderArea" class="flex items-center space-x-4">
+                <!-- Rendered dynamically via JS -->
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTAINER -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- TAB 1: HOME PAGE (MOVIES LIST) -->
+        <section id="tabHome" class="space-y-8">
+            <!-- Hero Banner Slider Placeholder -->
+            <div class="relative rounded-2xl overflow-hidden bg-gradient-to-r from-cinema-card to-gray-900 border border-gray-800 p-8 md:p-12 shadow-2xl">
+                <div class="absolute inset-0 bg-cover bg-center opacity-20" style="background-image: url('https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=1200');"></div>
+                <div class="relative z-10 max-w-2xl space-y-4">
+                    <span class="px-3 py-1 bg-cinema-red/20 text-cinema-red border border-cinema-red/40 rounded-full text-xs font-semibold uppercase tracking-widest">Đang Công Chiếu</span>
+                    <h1 class="text-3xl md:text-5xl font-extrabold text-white leading-tight">Trải Nghiệm Điện Ảnh Đỉnh Cao</h1>
+                    <p class="text-gray-400 text-sm md:text-base">Đặt vé xem phim rạp nhanh chóng, tiện lợi với âm thanh chuẩn Dolby Atmos và hệ thống ghế ngồi êm ái sang trọng.</p>
+                </div>
+            </div>
+
+            <!-- Category / Filter Header -->
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-gray-800 pb-4">
+                <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-fire text-cinema-red"></i> Phim Đang Chiếu
+                </h2>
+                <div class="flex items-center space-x-2">
+                    <span class="text-xs text-gray-400">Thể loại:</span>
+                    <select id="genreFilter" onchange="filterMovies()" class="bg-cinema-card text-gray-200 border border-gray-700 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-cinema-gold">
+                        <option value="ALL">Tất cả thể loại</option>
+                        <option value="Hành Động">Hành Động</option>
+                        <option value="Khoa Học Viễn Tưởng">Khoa Học Viễn Tưởng</option>
+                        <option value="Kinh Dị">Kinh Dị</option>
+                        <option value="Hoạt Hình">Hoạt Hình</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Movies Grid -->
+            <div id="moviesGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <!-- Rendered dynamically -->
+            </div>
+        </section>
+
+        <!-- TAB 2: SEAT SELECTION & BOOKING -->
+        <section id="tabBooking" class="hidden space-y-8">
+            <button onclick="switchTab('home')" class="text-gray-400 hover:text-white flex items-center gap-2 text-sm mb-4 transition-colors">
+                <i class="fa-solid fa-arrow-left"></i> Quay lại danh sách phim
+            </button>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Left: Seat Map Layout -->
+                <div class="lg:col-span-2 bg-cinema-card rounded-2xl p-6 border border-gray-800 flex flex-col items-center">
+
+                    <!-- Cinema Screen -->
+                    <div class="w-full mb-8 screen-3d">
+                        <div class="h-10 bg-gradient-to-b from-cinema-red/40 to-transparent border-t-4 border-cinema-red rounded-t-full screen-curve flex items-center justify-center">
+                            <span class="text-xs uppercase font-bold tracking-widest text-gray-300">MÀN HÌNH CHIẾU</span>
+                        </div>
+                    </div>
+
+                    <!-- Seat Grid -->
+                    <div id="seatGrid" class="flex flex-col gap-3 my-4 overflow-x-auto max-w-full p-2">
+                        <!-- Dynamic Seats Generated by JS -->
+                    </div>
+
+                    <!-- Seat Legend -->
+                    <div class="flex flex-wrap justify-center gap-6 mt-8 pt-6 border-t border-gray-800 text-xs text-gray-300">
+                        <div class="flex items-center gap-2">
+                            <div class="w-6 h-6 rounded bg-gray-700 border border-gray-600"></div>
+                            <span>Ghế Thường (100k)</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-6 h-6 rounded bg-amber-600/30 border border-amber-500 text-amber-500 font-bold flex items-center justify-center text-[10px]">V</div>
+                            <span>Ghế VIP (140k)</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-6 h-6 rounded bg-cinema-red border border-red-500"></div>
+                            <span>Đang chọn</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-6 h-6 rounded bg-gray-900 border border-gray-800 opacity-40"></div>
+                            <span>Đã bán</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Booking Summary -->
+                <div class="bg-cinema-card rounded-2xl p-6 border border-gray-800 flex flex-col justify-between space-y-6">
+                    <div>
+                        <h3 class="text-xl font-bold text-white border-b border-gray-800 pb-3 mb-4">Thông Tin Đặt Vé</h3>
+
+                        <!-- Movie Selected Info -->
+                        <div id="bookingMovieInfo" class="flex gap-4 mb-6">
+                            <!-- Injected by JS -->
+                        </div>
+
+                        <!-- Ticket Details -->
+                        <div class="space-y-3 text-sm text-gray-300 border-t border-b border-gray-800 py-4">
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Rạp chiếu:</span>
+                                <span class="font-medium text-white">Cinema 01 - Rạp IMAX</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Suất chiếu:</span>
+                                <span class="font-medium text-cinema-gold">19:30 - Hôm nay</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Ghế đã chọn:</span>
+                                <span id="selectedSeatsList" class="font-bold text-cinema-red">Chưa chọn</span>
+                            </div>
+                        </div>
+
+                        <!-- Price Breakdown -->
+                        <div class="mt-6 space-y-2">
+                            <div class="flex justify-between text-lg font-bold">
+                                <span class="text-white">Tổng tiền:</span>
+                                <span id="totalPrice" class="text-cinema-gold">0 VNĐ</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button onclick="confirmBooking()" class="w-full py-3.5 bg-gradient-to-r from-cinema-red to-red-700 hover:from-red-600 hover:to-red-800 text-white font-bold rounded-xl shadow-lg shadow-cinema-red/30 transition-all hover:scale-[1.02] active:scale-[0.98]">
+                        <i class="fa-solid fa-credit-card mr-2"></i> XÁC NHẬN ĐẶT VÉ
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: BOOKED TICKETS HISTORY -->
+        <section id="tabTickets" class="hidden space-y-6">
+            <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-receipt text-cinema-gold"></i> Lịch Sử Đặt Vé Của Bạn
+            </h2>
+
+            <div id="ticketHistoryContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Dynamically rendered -->
+            </div>
+        </section>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-cinema-card border-t border-gray-800 mt-12 py-6">
+        <div class="max-w-7xl mx-auto px-4 text-center text-gray-500 text-sm">
+            <p>© 2026 CINESTAR Cinema System. Tất cả quyền được bảo lưu.</p>
+            <p class="text-xs text-gray-600 mt-1">Mô phỏng Hệ Thống Đặt Vé Xem Phim Chuẩn Web App.</p>
+        </div>
+    </footer>
+
+    <!-- MODAL 1: LOGIN MODAL (Giao diện chuẩn với đếm số lần sai) -->
+    <div id="loginModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-cinema-card w-full max-w-md rounded-2xl border border-gray-800 p-8 shadow-2xl relative animate-fade-in">
+            <button onclick="toggleModal('loginModal', false)" class="absolute top-4 right-4 text-gray-400 hover:text-white text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="text-center mb-6">
+                <div class="w-12 h-12 bg-cinema-red/20 text-cinema-red rounded-full flex items-center justify-center mx-auto mb-3 text-xl">
+                    <i class="fa-solid fa-user-lock"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-white">Đăng Nhập</h3>
+                <p class="text-xs text-gray-400 mt-1">Đăng nhập tài khoản để đặt vé rạp chiếu phim</p>
+            </div>
+
+            <!-- Attempt Warning Message Box -->
+            <div id="loginAlert" class="hidden mb-4 p-3 rounded-xl bg-red-900/30 border border-red-500/50 text-red-400 text-xs text-center font-medium">
+                <!-- Alert message dynamically injected -->
+            </div>
+
+            <form onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Tài khoản (Username)</label>
+                    <input type="text" id="loginUser" required placeholder="Nhập admin hoặc hihi" class="w-full bg-cinema-dark border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cinema-gold transition-colors">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 uppercase mb-1">Mật khẩu (Password)</label>
+                    <input type="password" id="loginPass" required placeholder="Nhập 123" class="w-full bg-cinema-dark border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cinema-gold transition-colors">
+                </div>
+
+                <div class="text-xs text-gray-400 bg-gray-900/60 p-3 rounded-lg border border-gray-800 space-y-1">
+                    <p class="text-cinema-gold font-semibold"><i class="fa-solid fa-circle-info"></i> Tài khoản trải nghiệm:</p>
+                    <p>• User: <span class="text-white font-mono">hihi</span> | Pass: <span class="text-white font-mono">123</span></p>
+                    <p>• Admin: <span class="text-white font-mono">admin</span> | Pass: <span class="text-white font-mono">123</span></p>
+                </div>
+
+                <button type="submit" id="btnLoginSubmit" class="w-full py-3 bg-cinema-red hover:bg-cinema-redHover text-white font-bold rounded-xl shadow-lg transition-all">
+                    Đăng Nhập
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- NOTIFICATION TOAST -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-cinema-card border border-cinema-gold/40 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-cinema-gold text-lg"></i>
+        <span id="toastMsg" class="text-sm font-medium">Thông báo</span>
+    </div>
+
+    <!-- APPLICATION LOGIC JAVASCRIPT -->
+    <script>
+        // === MOCK DATA ===
+        const MOVIES = [
+            {
+                id: 1,
+                title: "Avatar: Dòng Dòng Nước",
+                genre: "Khoa Học Viễn Tưởng",
+                duration: "192 phút",
+                rating: 4.8,
+                poster: "https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=600",
+                description: "Hành trình khám phá đại dương sống động tại hành tinh Pandora với công nghệ hình ảnh mãn nhãn."
+            },
+            {
+                id: 2,
+                title: "Biệt Đội Siêu Anh Hùng",
+                genre: "Hành Động",
+                duration: "150 phút",
+                rating: 4.9,
+                poster: "https://images.unsplash.com/photo-1563089145-599997674d42?q=80&w=600",
+                description: "Trận chiến nảy lửa bảo vệ thế giới khỏi các thế lực đen tối đến từ ngoài vũ trụ."
+            },
+            {
+                id: 3,
+                title: "Vùng Đất Cấm",
+                genre: "Kinh Dị",
+                duration: "110 phút",
+                rating: 4.5,
+                poster: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?q=80&w=600",
+                description: "Một nhóm bạn trẻ vô tình bước vào ngôi làng bị nguyền rủa bí ẩn không có lối thoát."
+            },
+            {
+                id: 4,
+                title: "Hành Trình Kỳ Diệu",
+                genre: "Hoạt Hình",
+                duration: "98 phút",
+                rating: 4.7,
+                poster: "https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=600",
+                description: "Chuyến phiêu lưu đáng yêu và đầy cảm xúc của các chú thú cưng đi tìm vùng đất hứa."
+            }
+        ];
+
+        // Accounts list (Mock database)
+        const ACCOUNTS = {
+            "hihi": "123",
+            "admin": "123",
+            "user": "123"
+        };
+
+        // State Variables
+        let currentUser = null; // Currently logged in user
+        let loginAttempts = 0; // Login attempt counter (Console C++ logic)
+        const MAX_ATTEMPTS = 3;
+
+        let selectedMovie = null;
+        let selectedSeats = [];
+        let bookedTickets = []; // History of booked tickets
+
+        // Seat Price config
+        const SEAT_PRICES = {
+            regular: 100000,
+            vip: 140000
+        };
+
+        // Initialize App on Page Load
+        window.onload = function() {
+            renderHeaderUser();
+            renderMovies(MOVIES);
+            generateSeatMap();
+        };
+
+        // === USER & AUTHENTICATION LOGIC ===
+        function renderHeaderUser() {
+            const userArea = document.getElementById('userHeaderArea');
+            if (currentUser) {
+                userArea.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="text-right hidden sm:block">
+                            <div class="text-xs text-gray-400">Xin chào,</div>
+                            <div class="text-sm font-bold text-cinema-gold">${currentUser}</div>
+                        </div>
+                        <button onclick="handleLogout()" class="px-3.5 py-2 bg-gray-800 hover:bg-red-900/50 text-gray-300 hover:text-red-400 rounded-xl text-xs font-semibold border border-gray-700 transition-all">
+                            <i class="fa-solid fa-right-from-bracket"></i> Đăng Xuất
+                        </button>
+                    </div>
+                `;
+            } else {
+                userArea.innerHTML = `
+                    <button onclick="toggleModal('loginModal', true)" class="px-5 py-2.5 bg-gradient-to-r from-cinema-red to-red-700 hover:from-red-600 hover:to-red-800 text-white rounded-xl text-sm font-bold shadow-lg shadow-cinema-red/30 transition-all hover:scale-105">
+                        <i class="fa-solid fa-user mr-1.5"></i> Đăng Nhập
+                    </button>
+                `;
+            }
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+            const userIn = document.getElementById('loginUser').value.trim();
+            const passIn = document.getElementById('loginPass').value.trim();
+            const alertBox = document.getElementById('loginAlert');
+
+            // Verify Credentials
+            if (ACCOUNTS[userIn] && ACCOUNTS[userIn] === passIn) {
+                // Success
+                currentUser = userIn;
+                loginAttempts = 0; // Reset attempts
+                alertBox.classList.add('hidden');
+                toggleModal('loginModal', false);
+                renderHeaderUser();
+                showToast(`Đăng nhập thành công! Chào mừng ${currentUser}.`, 'success');
+                // Clear input fields
+                document.getElementById('loginUser').value = '';
+                document.getElementById('loginPass').value = '';
+            } else {
+                // Failed - Count logic from Console C++ app
+                loginAttempts++;
+                const remaining = MAX_ATTEMPTS - loginAttempts;
+
+                alertBox.classList.remove('hidden');
+
+                if (remaining > 0) {
+                    alertBox.innerHTML = `
+                        <i class="fa-solid fa-triangle-exclamation mr-1"></i>
+                        Sai tài khoản hoặc mật khẩu.<br>Bạn còn <strong>${remaining}</strong> lần đăng nhập.
+                    `;
+                } else {
+                    alertBox.innerHTML = `
+                        <i class="fa-solid fa-ban mr-1"></i>
+                        Bạn đã nhập sai 3 lần!<br>Tạm thời quay về màn hình chính.
+                    `;
+                    document.getElementById('btnLoginSubmit').disabled = true;
+                    document.getElementById('btnLoginSubmit').classList.add('opacity-50', 'cursor-not-allowed');
+
+                    // Reset after 5 seconds lock
+                    setTimeout(() => {
+                        loginAttempts = 0;
+                        alertBox.classList.add('hidden');
+                        document.getElementById('btnLoginSubmit').disabled = false;
+                        document.getElementById('btnLoginSubmit').classList.remove('opacity-50', 'cursor-not-allowed');
+                    }, 5000);
+                }
+            }
+        }
+
+        function handleLogout() {
+            currentUser = null;
+            renderHeaderUser();
+            showToast('Đã đăng xuất tài khoản.', 'info');
+        }
+
+        // === MOVIES LIST LOGIC ===
+        function renderMovies(moviesList) {
+            const grid = document.getElementById('moviesGrid');
+            grid.innerHTML = moviesList.map(movie => `
+                <div class="group bg-cinema-card rounded-2xl overflow-hidden border border-gray-800 hover:border-cinema-gold/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-cinema-gold/5 flex flex-col justify-between">
+                    <div>
+                        <!-- Poster Image -->
+                        <div class="relative aspect-[2/3] overflow-hidden bg-gray-900">
+                            <img src="${movie.poster}" alt="${movie.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.src='https://placehold.co/400x600/181a20/FFF?text=Poster'">
+                            <div class="absolute top-3 right-3 bg-black/70 backdrop-blur-md border border-cinema-gold/40 text-cinema-gold px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1">
+                                <i class="fa-solid fa-star text-xs"></i> ${movie.rating}
+                            </div>
+                        </div>
+                        <!-- Content -->
+                        <div class="p-5 space-y-2">
+                            <span class="text-xs text-cinema-gold font-medium uppercase tracking-wider">${movie.genre}</span>
+                            <h3 class="text-lg font-bold text-white group-hover:text-cinema-gold transition-colors line-clamp-1">${movie.title}</h3>
+                            <p class="text-xs text-gray-400 flex items-center gap-2">
+                                <i class="fa-regular fa-clock"></i> ${movie.duration}
+                            </p>
+                            <p class="text-xs text-gray-400 line-clamp-2 mt-2">${movie.description}</p>
+                        </div>
+                    </div>
+
+                    <div class="p-5 pt-0">
+                        <button onclick="startBooking(${movie.id})" class="w-full py-2.5 bg-gray-800 group-hover:bg-cinema-red text-gray-200 group-hover:text-white rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-ticket"></i> Đặt Vé Ngay
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterMovies() {
+            const genre = document.getElementById('genreFilter').value;
+            if (genre === 'ALL') {
+                renderMovies(MOVIES);
+            } else {
+                const filtered = MOVIES.filter(m => m.genre === genre);
+                renderMovies(filtered);
+            }
+        }
+
+        // === BOOKING & SEAT MAP LOGIC ===
+        function startBooking(movieId) {
+            if (!currentUser) {
+                showToast('Vui lòng đăng nhập để đặt vé!', 'error');
+                toggleModal('loginModal', true);
+                return;
+            }
+
+            selectedMovie = MOVIES.find(m => m.id === movieId);
+            selectedSeats = [];
+
+            // Render Selected Movie Info in Sidebar
+            document.getElementById('bookingMovieInfo').innerHTML = `
+                <img src="${selectedMovie.poster}" class="w-16 h-24 object-cover rounded-lg border border-gray-700">
+                <div>
+                    <h4 class="font-bold text-white leading-snug">${selectedMovie.title}</h4>
+                    <span class="text-xs text-cinema-gold font-medium">${selectedMovie.genre}</span>
+                    <p class="text-xs text-gray-400 mt-1">${selectedMovie.duration}</p>
+                </div>
+            `;
+
+            updateBookingSummary();
+            switchTab('booking');
+        }
+
+        function generateSeatMap() {
+            const grid = document.getElementById('seatGrid');
+            const rows = ['A', 'B', 'C', 'D', 'E'];
+            const cols = 8;
+
+            let html = '';
+
+            rows.forEach(row => {
+                html += `<div class="flex gap-2 items-center justify-center">`;
+                html += `<span class="w-6 text-center text-xs font-bold text-gray-500">${row}</span>`;
+
+                for (let i = 1; i <= cols; i++) {
+                    const seatId = `${row}${i}`;
+                    const isVip = (row === 'C' || row === 'D'); // Rows C & D are VIP seats
+
+                    // Randomly mock some booked seats
+                    const isBooked = (row === 'A' && i === 3) || (row === 'C' && i === 5);
+
+                    let seatClasses = "w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center text-xs font-bold cursor-pointer transition-all border ";
+
+                    if (isBooked) {
+                        seatClasses += "bg-gray-900 border-gray-800 text-gray-600 cursor-not-allowed opacity-40";
+                    } else if (isVip) {
+                        seatClasses += "bg-amber-900/20 border-amber-500/50 text-amber-500 hover:bg-amber-500 hover:text-black seat-btn";
+                    } else {
+                        seatClasses += "bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700 hover:border-gray-500 seat-btn";
+                    }
+
+                    html += `
+                        <button id="seat-${seatId}"
+                                ${isBooked ? 'disabled' : ''}
+                                onclick="toggleSeat('${seatId}', ${isVip})"
+                                class="${seatClasses}">
+                            ${i}
+                        </button>
+                    `;
+                }
+                html += `</div>`;
+            });
+
+            grid.innerHTML = html;
+        }
+
+        function toggleSeat(seatId, isVip) {
+            const btn = document.getElementById(`seat-${seatId}`);
+            const index = selectedSeats.findIndex(s => s.id === seatId);
+
+            if (index > -1) {
+                // Deselect
+                selectedSeats.splice(index, 1);
+                btn.classList.remove('bg-cinema-red', 'border-red-500', 'text-white');
+                if (isVip) {
+                    btn.classList.add('bg-amber-900/20', 'border-amber-500/50', 'text-amber-500');
+                } else {
+                    btn.classList.add('bg-gray-800', 'border-gray-700', 'text-gray-300');
+                }
+            } else {
+                // Select
+                selectedSeats.push({
+                    id: seatId,
+                    type: isVip ? 'VIP' : 'Thường',
+                    price: isVip ? SEAT_PRICES.vip : SEAT_PRICES.regular
+                });
+                btn.classList.remove('bg-amber-900/20', 'bg-gray-800', 'border-amber-500/50', 'border-gray-700', 'text-amber-500', 'text-gray-300');
+                btn.classList.add('bg-cinema-red', 'border-red-500', 'text-white');
+            }
+
+            updateBookingSummary();
+        }
+
+        function updateBookingSummary() {
+            const seatsList = document.getElementById('selectedSeatsList');
+            const totalPrice = document.getElementById('totalPrice');
+
+            if (selectedSeats.length === 0) {
+                seatsList.innerText = 'Chưa chọn';
+                totalPrice.innerText = '0 VNĐ';
+                return;
+            }
+
+            const seatNames = selectedSeats.map(s => `${s.id} (${s.type})`).join(', ');
+            const total = selectedSeats.reduce((sum, s) => sum + s.price, 0);
+
+            seatsList.innerText = seatNames;
+            totalPrice.innerText = total.toLocaleString('vi-VN') + ' VNĐ';
+        }
+
+        function confirmBooking() {
+            if (selectedSeats.length === 0) {
+                showToast('Vui lòng chọn ít nhất một ghế!', 'error');
+                return;
+            }
+
+            const total = selectedSeats.reduce((sum, s) => sum + s.price, 0);
+
+            // Add to ticket history
+            const ticket = {
+                id: 'CS' + Math.floor(100000 + Math.random() * 900000),
+                movieTitle: selectedMovie.title,
+                poster: selectedMovie.poster,
+                seats: selectedSeats.map(s => s.id).join(', '),
+                totalPrice: total,
+                date: new Date().toLocaleString('vi-VN')
+            };
+
+            bookedTickets.unshift(ticket);
+            showToast('Đặt vé thành công!', 'success');
+
+            renderTicketHistory();
+            switchTab('tickets');
+        }
+
+        function renderTicketHistory() {
+            const container = document.getElementById('ticketHistoryContainer');
+            if (bookedTickets.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full py-12 text-center text-gray-500">
+                        <i class="fa-solid fa-ticket-simple text-4xl mb-3"></i>
+                        <p>Bạn chưa có lịch sử đặt vé nào.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = bookedTickets.map(t => `
+                <div class="bg-cinema-card rounded-2xl p-5 border border-gray-800 flex gap-4 items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <img src="${t.poster}" class="w-16 h-20 object-cover rounded-lg border border-gray-700">
+                        <div>
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-cinema-gold bg-cinema-gold/10 px-2 py-0.5 rounded border border-cinema-gold/30">Mã vé: #${t.id}</span>
+                            <h4 class="font-bold text-white text-base mt-1">${t.movieTitle}</h4>
+                            <p class="text-xs text-gray-400 mt-1"><i class="fa-solid fa-couch"></i> Ghế: <strong class="text-cinema-red">${t.seats}</strong></p>
+                            <p class="text-xs text-gray-500 mt-0.5"><i class="fa-regular fa-clock"></i> ${t.date}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-xs text-gray-400">Tổng tiền</div>
+                        <div class="text-base font-bold text-cinema-gold">${t.totalPrice.toLocaleString('vi-VN')} đ</div>
+                        <span class="inline-block mt-2 text-[10px] bg-green-900/30 text-green-400 border border-green-500/40 px-2 py-0.5 rounded-full font-semibold">Đã Thanh Toán</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // === NAVIGATION & UI HELPERS ===
+        function switchTab(tabName) {
+            document.getElementById('tabHome').classList.add('hidden');
+            document.getElementById('tabBooking').classList.add('hidden');
+            document.getElementById('tabTickets').classList.add('hidden');
+
+            if (tabName === 'home') document.getElementById('tabHome').classList.remove('hidden');
+            if (tabName === 'booking') document.getElementById('tabBooking').classList.remove('hidden');
+            if (tabName === 'tickets') {
+                renderTicketHistory();
+                document.getElementById('tabTickets').classList.remove('hidden');
+            }
+        }
+
+        function toggleModal(modalId, show) {
+            const modal = document.getElementById(modalId);
+            if (show) modal.classList.remove('hidden');
+            else modal.classList.add('hidden');
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            const msg = document.getElementById('toastMsg');
+            const icon = document.getElementById('toastIcon');
+
+            msg.innerText = message;
+
+            if (type === 'error') {
+                icon.className = 'fa-solid fa-circle-xmark text-red-500 text-lg';
+            } else if (type === 'success') {
+                icon.className = 'fa-solid fa-circle-check text-green-500 text-lg';
+            } else {
+                icon.className = 'fa-solid fa-circle-info text-cinema-gold text-lg';
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
